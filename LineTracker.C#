@@ -1,0 +1,64 @@
+const int motorPin1 = 9;  // Right front
+const int motorPin2 = 10; // Left front
+const int motorPin3 = 5;  // Left back
+const int motorPin4 = 6;  // Right back
+
+const int NUM_SENSORS = 8; // The number of sensors on the line tracker.
+const int SENSOR_PINS[NUM_SENSORS] = {A6, A7, A0, A2, A1, A3, A4, A5}; // Pins for the Line tracker sensor, put in an Array. So that it reads from left side to the Right side on the Sensor in the Serial monitor
+const int SENSOR_THRESHOLD = 679; // Threshold is calculated by reading the sensors raw numbers on and off the tape, then finding the avarage on and off, add them to eachother and devide by 2.
+
+void readSensors(int sensorValues[]) {  // reading all values based on the number off sensors in the Sensor_PINS[NUM_SENSORS] Array
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    sensorValues[i] = analogRead(SENSOR_PINS[i]);
+  }
+}
+void setup() {
+  Serial.begin(9600);
+  pinMode(motorPin1, OUTPUT);
+  pinMode(motorPin2, OUTPUT);
+  pinMode(motorPin3, OUTPUT);
+  pinMode(motorPin4, OUTPUT);
+}
+
+void loop() {
+  
+  int sensorValues[NUM_SENSORS]; // Start the loop by reading the values from all Line tracker sensors.
+  readSensors(sensorValues); 
+
+  for (int i = 0; i < NUM_SENSORS; i++) { // Transform raw values from the line tracker sensors into 1 or 0 
+    sensorValues[i] = sensorValues[i] > SENSOR_THRESHOLD ? 1 : 0;
+  }
+
+  for (int i = 0; i < NUM_SENSORS; i++) { // Print Values from array into colums in the Serial Monitor
+    Serial.print(sensorValues[i]);
+    Serial.print("\t");
+  }
+  Serial.println();
+
+    if (sensorValues[3] == 1 || sensorValues[4] == 1) { // if sensor 3 or 4 on the sensor array reads 1, Go forward.
+    analogWrite(motorPin1, 180); // Right Front
+    analogWrite(motorPin2, 180); // Left Front
+    analogWrite(motorPin3, 0);   //left back
+    analogWrite(motorPin4, 0);   //right back
+  } else if (sensorValues[0] == 1 || sensorValues[1] == 1 || sensorValues[2] == 1) { // if sensor 0,1 or 2 on the sensor array reads 1, Turn Right.
+    analogWrite(motorPin1, 220);
+    analogWrite(motorPin2, 0);
+    analogWrite(motorPin3, 115);
+    analogWrite(motorPin4, 0);
+  } else if (sensorValues[5] == 1 || sensorValues[6] == 1 || sensorValues[7] == 1) { // If sensor 5,6 or 7 on in the Sensor array reads 1, Turn Left.
+    analogWrite(motorPin1, 0);
+    analogWrite(motorPin2, 220);
+    analogWrite(motorPin3, 0);
+    analogWrite(motorPin4, 115);
+  } else if (sensorValues[2] == 1 && sensorValues[3] == 1 && sensorValues[4] == 1 && sensorValues[5] == 1){ // If all 4 middle sensors read 1 go straight. 
+    analogWrite(motorPin1, 180);                                                                            // This is for the Crossroads on the trail.
+    analogWrite(motorPin2, 180);
+    analogWrite(motorPin3, 0);
+    analogWrite(motorPin4, 0);
+  } else { // Stop Completely
+    analogWrite(motorPin1, 0);
+    analogWrite(motorPin2, 0);
+    analogWrite(motorPin3, 0);
+    analogWrite(motorPin4, 0); 
+  }
+}
